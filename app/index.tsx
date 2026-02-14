@@ -5,19 +5,44 @@ import {
   FlatList,
   Image,
   Keyboard,
+  LayoutAnimation,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  UIManager,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+if (Platform.OS === "android") {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
 
 type Task = {
   id: number;
   title: string;
   isDone: boolean;
+};
+
+const lightTheme = {
+  background: "#f5f5f5",
+  card: "#fff",
+  text: "#222",
+  textSecondary: "#333",
+  placeholder: "#aaa",
+  border: "#e0e0e0",
+};
+
+const darkTheme = {
+  background: "#1a1a2e",
+  card: "#16213e",
+  text: "#eee",
+  textSecondary: "#ccc",
+  placeholder: "#666",
+  border: "#2a2a4a",
 };
 
 export default function Index() {
@@ -27,6 +52,14 @@ export default function Index() {
     { id: 3, title: "Finish project report", isDone: false },
   ]);
   const [text, setText] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const theme = isDarkMode ? darkTheme : lightTheme;
+
+  const toggleTheme = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsDarkMode((prev) => !prev);
+  };
 
   const addTask = () => {
     if (text.trim().length === 0) return;
@@ -37,12 +70,14 @@ export default function Index() {
       isDone: false,
     };
 
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setTasks((prev) => [newTask, ...prev]);
     setText("");
     Keyboard.dismiss();
   };
 
   const toggleTask = (id: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setTasks((prev) =>
       prev.map((task) =>
         task.id === id ? { ...task, isDone: !task.isDone } : task
@@ -56,13 +91,22 @@ export default function Index() {
       {
         text: "Delete",
         style: "destructive",
-        onPress: () => setTasks((prev) => prev.filter((t) => t.id !== id)),
+        onPress: () => {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setTasks((prev) => prev.filter((t) => t.id !== id));
+        },
       },
     ]);
   };
 
   const renderTask = ({ item }: { item: Task }) => (
-    <View style={[styles.taskCard, item.isDone && styles.taskDone]}>
+    <View
+      style={[
+        styles.taskCard,
+        { backgroundColor: theme.card },
+        item.isDone && styles.taskDone,
+      ]}
+    >
       <Pressable
         onPress={() => toggleTask(item.id)}
         style={styles.checkboxArea}
@@ -70,11 +114,15 @@ export default function Index() {
         <Ionicons
           name={item.isDone ? "checkbox" : "square-outline"}
           size={24}
-          color={item.isDone ? "#4caf50" : "#999"}
+          color={item.isDone ? "#4caf50" : theme.placeholder}
         />
       </Pressable>
       <Text
-        style={[styles.taskText, item.isDone && styles.taskTextDone]}
+        style={[
+          styles.taskText,
+          { color: theme.textSecondary },
+          item.isDone && styles.taskTextDone,
+        ]}
         numberOfLines={2}
       >
         {item.title}
@@ -89,14 +137,23 @@ export default function Index() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Tasks</Text>
-        <Image
-          source={{ uri: "https://randomuser.me/api/portraits/men/1.jpg" }}
-          style={styles.avatar}
-        />
+        <Text style={[styles.headerTitle, { color: theme.text }]}>My Tasks</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={toggleTheme} style={styles.themeBtn}>
+            <Ionicons
+              name={isDarkMode ? "sunny" : "moon"}
+              size={22}
+              color={theme.text}
+            />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: "https://randomuser.me/api/portraits/men/1.jpg" }}
+            style={styles.avatar}
+          />
+        </View>
       </View>
 
       {/* Add Tasks */}
@@ -105,8 +162,8 @@ export default function Index() {
           value={text}
           onChangeText={setText}
           placeholder="Add a new task..."
-          placeholderTextColor="#aaa"
-          style={styles.input}
+          placeholderTextColor={theme.placeholder}
+          style={[styles.input, { backgroundColor: theme.card, color: theme.textSecondary }]}
           onSubmitEditing={addTask}
           returnKeyType="done"
         />
@@ -122,8 +179,10 @@ export default function Index() {
       {/* Tasks List */}
       {tasks.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="checkmark-done-circle-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>No tasks yet. Add one above!</Text>
+          <Ionicons name="checkmark-done-circle-outline" size={64} color={theme.placeholder} />
+          <Text style={[styles.emptyText, { color: theme.placeholder }]}>
+            No tasks yet. Add one above!
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -142,7 +201,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    backgroundColor: "#f5f5f5",
   },
   header: {
     flexDirection: "row",
@@ -154,7 +212,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#222",
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  themeBtn: {
+    padding: 6,
   },
   avatar: {
     width: 40,
@@ -168,12 +233,10 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: "#fff",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
     fontSize: 15,
-    color: "#333",
   },
   addBtn: {
     backgroundColor: "#4a90d9",
@@ -186,7 +249,6 @@ const styles = StyleSheet.create({
   taskCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 14,
     borderRadius: 10,
     marginBottom: 10,
@@ -200,7 +262,6 @@ const styles = StyleSheet.create({
   taskText: {
     flex: 1,
     fontSize: 15,
-    color: "#333",
   },
   taskTextDone: {
     textDecorationLine: "line-through",
@@ -219,6 +280,5 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 12,
     fontSize: 16,
-    color: "#aaa",
   },
 });
