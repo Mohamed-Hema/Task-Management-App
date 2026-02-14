@@ -86,17 +86,21 @@ export default function Index() {
   };
 
   const deleteTask = (id: number) => {
-    Alert.alert("Delete Task", "Are you sure you want to delete this task?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          setTasks((prev) => prev.filter((t) => t.id !== id));
-        },
-      },
-    ]);
+    const handleDelete = () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    };
+
+    if (Platform.OS === "web") {
+      if (confirm("Are you sure you want to delete this task?")) {
+        handleDelete();
+      }
+    } else {
+      Alert.alert("Delete Task", "Are you sure you want to delete this task?", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: handleDelete },
+      ]);
+    }
   };
 
   const renderTask = ({ item }: { item: Task }) => (
