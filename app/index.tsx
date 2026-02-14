@@ -6,6 +6,7 @@ import {
   Image,
   Keyboard,
   LayoutAnimation,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -197,6 +198,16 @@ export default function Index() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Footer */}
+      <TouchableOpacity
+        onPress={() => Linking.openURL("https://mohamed-mostafa-portfolio.netlify.app/")}
+        style={styles.footer}
+      >
+        <Text style={[styles.footerText, { color: '#004280ff' }]}>
+          Developed by Mohamed Ibrahim 🧑‍💻 @2026
+        </Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -284,5 +295,12 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 12,
     fontSize: 16,
+  },
+  footer: {
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  footerText: {
+    fontSize: 13,
   },
 });
